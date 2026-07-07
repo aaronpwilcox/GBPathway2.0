@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gallbladder Surgical Care Pathway</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --primary: #2b6cb0;
+    --primary-dark: #1e4e8c;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1a202c;
+    --muted: #64748b;
+    --urgent-bg: #fee2e2; --urgent-text: #b91c1c;
+    --moderate-bg: #fef3c7; --moderate-text: #b45309;
+    --routine-bg: #dcfce7; --routine-text: #15803d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: var(--card); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  .topbar .actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); color: var(--text); cursor: pointer; font-size: 14px;
+    font-weight: 500; transition: background 0.15s;
+  }
+  .btn:hover { background: #f1f5f9; }
+  .btn-primary {
+    background: var(--primary); color: white; border: none;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .btn-outline { background: transparent; }
+  .container { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .progress-wrap { max-width: 720px; margin: 0 auto; padding: 16px 20px 0; }
+  .progress-bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+  .progress-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  h2 { font-size: 21px; margin: 0 0 6px; }
+  h3 { font-size: 16px; margin: 20px 0 8px; }
+  p { line-height: 1.55; color: #334155; }
+  .muted { color: var(--muted); font-size: 14px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155; }
+  input[type=text], input[type=date], input[type=tel], input[type=email], input[type=number], select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; margin-bottom: 16px; font-family: inherit;
+  }
+  textarea { min-height: 80px; resize: vertical; }
+  .field-group { margin-bottom: 4px; }
+  .radio-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .radio-pill {
+    flex: 1; text-align: center; padding: 10px; border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; font-size: 14px; user-select: none;
+  }
+  .radio-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .slider-value { text-align: center; font-size: 24px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  input[type=range] { width: 100%; margin-bottom: 16px; }
+  .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .badge-urgent { background: var(--urgent-bg); color: var(--urgent-text); }
+  .badge-moderate { background: var(--moderate-bg); color: var(--moderate-text); }
+  .badge-routine { background: var(--routine-bg); color: var(--routine-text); }
+  .badge-outline { background: #eef2f7; color: #475569; }
+  .nav-row { display: flex; justify-content: space-between; margin-top: 24px; gap: 10px; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+  @media (max-width: 560px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .compare-card h4 { margin: 0 0 10px; font-size: 14px; }
+  .compare-card ul { margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6; }
+  .decision-options { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .decision-btn {
+    text-align: left; padding: 18px; border-radius: 12px; border: 2px solid var(--border);
+    background: white; cursor: pointer; font-size: 15px; font-weight: 600;
+  }
+  .decision-btn:hover { border-color: var(--primary); background: #f0f6fc; }
+  .decision-btn .sub { display: block; font-weight: 400; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .checklist-item:last-child { border-bottom: none; }
+  .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table th, .table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  .table th { color: var(--muted); font-weight: 600; }
+  .record-row { cursor: pointer; }
+  .record-row:hover { background: #f8fafc; }
+  .detail-panel { background: #f8fafc; border-radius: 10px; padding: 16px; margin-top: 8px; font-size: 13px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 10px; }
+  .kv .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  .kv .v { font-size: 13px; font-weight: 500; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .settings-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.4); display: flex;
+    align-items: center; justify-content: center; z-index: 100;
+  }
+  .settings-modal { background: white; border-radius: 14px; padding: 24px; width: 90%; max-width: 420px; }
+  .spinner {
+    width: 34px; height: 34px; border: 3px solid #e2e8f0; border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 0.8s linear infinite; margin: 30px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+
+const { useState, useEffect } = React;
+
+const STEPS = ["intro","assessment","triage","education","decisionAid","decisionPoint","prep","scheduling","notInterested","consult","complete"];
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem("gb_pathway_records") || "[]"); }
+  catch (e) { return []; }
+}
+function saveRecords(records) {
+  localStorage.setItem("gb_pathway_records", JSON.stringify(records));
+}
+
+function fallbackTriage(d) {
+  if (d.fever === "yes" || d.jaundice === "yes" || Number(d.painSeverity) >= 8) {
+    return { urgency: "urgent", reasoning: "Reported fever, jaundice, and/or severe pain (8+/10) can indicate acute cholecystitis, a common bile duct obstruction, or biliary complications that need prompt evaluation.", recommendedNextSteps: "Seek same-day evaluation or go to an emergency department if symptoms worsen." };
+  }
+  if (d.painAfterFattyFood === "yes" && d.recurringEpisodes === "yes") {
+    return { urgency: "moderate", reasoning: "Recurring episodes of pain triggered by fatty food are classic for symptomatic gallstones (biliary colic) and typically warrant a surgical consultation within the next couple of weeks.", recommendedNextSteps: "Schedule a surgical consultation soon; seek urgent care if pain becomes constant or severe." };
+  }
+  return { urgency: "routine", reasoning: "Symptoms described are mild and without red-flag features. A routine surgical consultation can help evaluate whether treatment is needed.", recommendedNextSteps: "Schedule a routine consultation at your convenience." };
+}
+
+async function callTriageAI(apiKey, d) {
+  const prompt = "You are a clinical triage assistant helping route gallbladder (biliary) symptom reports to the right level of urgency. " +
+    "This is for pathway routing only, not a diagnosis. Based on the patient-reported data below, classify urgency as exactly one of: urgent, moderate, routine.\n\n" +
+    "Patient-reported data:\n" +
+    "- Pain location: " + d.painLocation + "\n" +
+    "- Pain severity (0-10): " + d.painSeverity + "\n" +
+    "- Duration (days): " + d.durationDays + "\n" +
+    "- Pain triggered by fatty food: " + d.painAfterFattyFood + "\n" +
+    "- Recurring episodes: " + d.recurringEpisodes + "\n" +
+    "- Nausea/vomiting: " + d.nauseaVomiting + "\n" +
+    "- Fever: " + d.fever + "\n" +
+    "- Jaundice (yellowing skin/eyes): " + d.jaundice + "\n" +
+    "- Prior gallstone diagnosis: " + d.priorGallstoneDiagnosis + "\n\n" +
+    "Respond with ONLY strict JSON, no markdown fences, in this exact shape:\n" +
+    '{"urgency": "urgent|moderate|routine", "reasoning": "2-3 sentence patient-friendly explanation", "recommendedNextSteps": "1 sentence next step"}';
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-5",
+      max_tokens: 400,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (!res.ok) throw new Error("API error " + res.status);
+  const json = await res.json();
+  let text = json.content[0].text.trim();
+  text = text.replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+  return JSON.parse(text);
+}
+
+function ProgressBar({ step }) {
+  const order = ["intro","assessment","triage","education","decisionAid","decisionPoint","prep","scheduling","notInterested","consult","complete"];
+  const idx = order.indexOf(step);
+  const pct = Math.round((idx / (order.length - 1)) * 100);
+  if (step === "intro") return null;
+  return (
+    <div className="progress-wrap">
+      <div className="progress-bar"><div className="progress-fill" style={{width: pct + "%"}}></div></div>
+      <div className="progress-label">Step {idx} of {order.length - 1}</div>
+    </div>
+  );
+}
+
+function Badge({ urgency }) {
+  const cls = urgency === "urgent" ? "badge-urgent" : urgency === "moderate" ? "badge-moderate" : "badge-routine";
+  return <span className={"badge " + cls}>{urgency}</span>;
+}
+
+function Intro({ onStart }) {
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Gallbladder Care Pathway</h2>
+        <p>This guided pathway helps you understand your symptoms, learn about your gallbladder, and decide on next steps together with your care team &mdash; at your own pace.</p>
+        <p className="muted">Takes about 5&ndash;8 minutes. Your responses are shared with your care team so they can follow up with you.</p>
+        <button className="btn btn-primary" onClick={onStart}>Get started</button>
+      </div>
+    </div>
+  );
+}
+
+function RadioPills({ value, onChange, options }) {
+  return (
+    <div className="radio-row">
+      {options.map(opt => (
+        <div key={opt} className={"radio-pill" + (value === opt ? " active" : "")} onClick={() => onChange(opt)}>
+          {opt === "yes" ? "Yes" : opt === "no" ? "No" : opt}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Assessment({ data, setData, onComplete }) {
+  const [sub, setSub] = useState(0);
+  const update = (k, v) => setData({ ...data, [k]: v });
+
+  const page0Valid = data.patientName && data.dob && data.painLocation && data.durationDays;
+  const page1Valid = data.painAfterFattyFood && data.recurringEpisodes && data.nauseaVomiting;
+  const page2Valid = data.fever && data.jaundice && data.priorGallstoneDiagnosis;
+
+  return (
+    <div className="container">
+      <div className="card">
+        {sub === 0 && (
+          <React.Fragment>
+            <h2>About you</h2>
+            <p className="muted">Basic info and pain overview.</p>
+            <label>Full name</label>
+            <input type="text" value={data.patientName} onChange={e => update("patientName", e.target.value)} />
+            <label>Date of birth</label>
+            <input type="date" value={data.dob} onChange={e => update("dob", e.target.value)} />
+            <label>Where is the pain?</label>
+            <select value={data.painLocation} onChange={e => update("painLocation", e.target.value)}>
+              <option value="">Select one</option>
+              <option value="right upper abdomen">Right upper abdomen</option>
+              <option value="general abdomen">General/all-over abdomen</option>
+              <option value="back or shoulder">Back or right shoulder</option>
+              <option value="other">Other</option>
+            </select>
+            <label>Pain severity right now</label>
+            <div className="slider-value">{data.painSeverity}/10</div>
+            <input type="range" min="0" max="10" value={data.painSeverity} onChange={e => update("painSeverity", e.target.value)} />
+            <label>How many days has this been going on?</label>
+            <input type="number" min="0" value={data.durationDays} onChange={e => update("durationDays", e.target.value)} />
+            <div className="nav-row">
+              <span></span>
+              <button className="btn btn-primary" disabled={!page0Valid} onClick={() => setSub(1)}>Next</button>
+            </div>
+          </React.Fragment>
+        )}
+        {sub === 1 && (
+          <React.Fragment>
+            <h2>Pain patterns</h2>
+            <p className="muted">Help us understand what triggers or relieves it.</p>
+            <label>Does the pain get worse after fatty or fried food?</label>
+            <RadioPills value={data.painAfterFattyFood} onChange={v => update("painAfterFattyFood", v)} options={["yes","no"]} />
+            <label>Have you had repeated episodes like this before?</label>
+            <RadioPills value={data.recurringEpisodes} onChange={v => update("recurringEpisodes", v)} options={["yes","no"]} />
+            <label>Any nausea or vomiting?</label>
+            <RadioPills value={data.nauseaVomiting} onChange={v => update("nauseaVomiting", v)} options={["yes","no"]} />
+            <div className="nav-row">
+              <button className="btn" onClick={() => setSub(0)}>Back</button>
+              <button className="btn btn-primary" disabled={!page1Valid} onClick={() => setSub(2)}>Next</button>
+            </div>
+          </React.Fragment>
+        )}
+        {sub === 2 && (
+          <React.Fragment>
+            <h2>A few important checks</h2>
+            <p className="muted">These help us flag anything that needs urgent attention.</p>
+            <label>Do you currently have a fever?</label>
+            <RadioPills value={data.fever} onChange={v => update("fever", v)} options={["yes","no"]} />
+            <label>Any yellowing of your skin or eyes (jaundice)?</label>
+            <RadioPills value={data.jaundice} onChange={v => update("jaundice", v)} options={["yes","no"]} />
+            <label>Have you been diagnosed with gallstones before?</label>
+            <RadioPills value={data.priorGallstoneDiagnosis} onChange={v => update("priorGallstoneDiagnosis", v)} options={["yes","no"]} />
+            <div className="nav-row">
+              <button className="btn" onClick={() => setSub(1)}>Back</button>
+              <button className="btn btn-primary" disabled={!page2Valid} onClick={onComplete}>Continue to review</button>
+            </div>
+          </React.Fragment>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Triage({ data, apiKey, result, setResult, onContinue }) {
+  const [status, setStatus] = useState("loading");
+  const [source, setSource] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      setStatus("loading");
+      if (apiKey) {
+        try {
+          const r = await callTriageAI(apiKey, data);
+          if (!cancelled) { setResult(r); setSource("ai"); setStatus("done"); }
+          return;
+        } catch (e) {
+          // fall through to rule-based fallback
+        }
+      }
+      const r = fallbackTriage(data);
+      if (!cancelled) { setResult(r); setSource("fallback"); setStatus("done"); }
+    }
+    run();
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Reviewing your responses</h2>
+        {status === "loading" && (
+          <React.Fragment>
+            <div className="spinner"></div>
+            <p className="muted" style={{textAlign: "center"}}>Analyzing your symptoms&hellip;</p>
+          </React.Fragment>
+        )}
+        {status === "done" && result && (
+          <React.Fragment>
+            <p><Badge urgency={result.urgency} /></p>
+            <p>{result.reasoning}</p>
+            <p className="muted"><strong>Suggested next step:</strong> {result.recommendedNextSteps}</p>
+            {source === "fallback" && <p className="muted" style={{fontSize: "12px"}}>Generated using built-in rules (no AI key was provided for this session).</p>}
+            <div className="nav-row">
+              <span></span>
+              <button className="btn btn-primary" onClick={onContinue}>Continue</button>
+            </div>
+          </React.Fragment>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AnatomySVGBefore() {
+  return (
+    <svg viewBox="0 0 300 220" width="100%" height="200">
+      <rect x="0" y="0" width="300" height="220" fill="#fdf2f2" rx="12" />
+      <ellipse cx="150" cy="120" rx="70" ry="55" fill="#e8b4a8" opacity="0.5" />
+      <path d="M120 80 C110 100, 110 140, 130 160 C145 172, 165 172, 180 158 C195 144, 195 105, 178 85 C165 70, 135 70, 120 80 Z" fill="#8b5a3c" />
+      <circle cx="145" cy="120" r="6" fill="#fff8e7" stroke="#b45309" strokeWidth="1.5" />
+      <circle cx="160" cy="135" r="8" fill="#fff8e7" stroke="#b45309" strokeWidth="1.5" />
+      <circle cx="155" cy="105" r="5" fill="#fff8e7" stroke="#b45309" strokeWidth="1.5" />
+      <path d="M120 80 C110 100, 110 140, 130 160 C145 172, 165 172, 180 158 C195 144, 195 105, 178 85" fill="none" stroke="#dc2626" strokeWidth="2" strokeDasharray="3 3" />
+      <text x="150" y="205" textAnchor="middle" fontSize="12" fill="#7f1d1d" fontWeight="600">Gallbladder with gallstones (inflamed)</text>
+    </svg>
+  );
+}
+function AnatomySVGAfter() {
+  return (
+    <svg viewBox="0 0 300 220" width="100%" height="200">
+      <rect x="0" y="0" width="300" height="220" fill="#f0fdf4" rx="12" />
+      <ellipse cx="150" cy="120" rx="70" ry="55" fill="#bbf7d0" opacity="0.5" />
+      <path d="M130 95 Q150 88 170 95" fill="none" stroke="#15803d" strokeWidth="2.5" strokeDasharray="4 3" />
+      <circle cx="140" cy="95" r="2.5" fill="#166534" />
+      <circle cx="160" cy="95" r="2.5" fill="#166534" />
+      <circle cx="150" cy="90" r="2.5" fill="#166534" />
+      <text x="150" y="140" textAnchor="middle" fontSize="12" fill="#166534">Gallbladder removed</text>
+      <text x="150" y="158" textAnchor="middle" fontSize="11" fill="#166534">(small incision sites shown)</text>
+      <text x="150" y="205" textAnchor="middle" fontSize="12" fill="#166534" fontWeight="600">After laparoscopic cholecystectomy</text>
+    </svg>
+  );
+}
+
+function Education({ onContinue }) {
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Understanding your gallbladder</h2>
+        <p>Your gallbladder stores bile made by your liver and releases it to help digest fatty foods. When gallstones form, they can block bile flow and cause pain, especially after fatty meals.</p>
+        <div className="compare-grid">
+          <div className="compare-card"><AnatomySVGBefore /></div>
+          <div className="compare-card"><AnatomySVGAfter /></div>
+        </div>
+        <h3>What is a cholecystectomy?</h3>
+        <p>It's the surgical removal of the gallbladder, most often done laparoscopically through a few small incisions. Your body can digest fat normally without it &mdash; bile simply flows directly from the liver to the intestine.</p>
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" onClick={onContinue}>Continue</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DecisionAid({ onContinue }) {
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Weighing your options</h2>
+        <p className="muted">Every patient's situation is different &mdash; this is general information to support a conversation with your surgeon, not a substitute for it.</p>
+        <div className="compare-grid">
+          <div className="compare-card">
+            <h4>Laparoscopic surgery</h4>
+            <ul>
+              <li>Removes the source of symptoms</li>
+              <li>Low recurrence of gallstone pain</li>
+              <li>Usually 1&ndash;4 small incisions</li>
+              <li>Most people go home same day or next day</li>
+              <li>Small risks: infection, bile duct injury, bleeding</li>
+            </ul>
+          </div>
+          <div className="compare-card">
+            <h4>Watchful waiting</h4>
+            <ul>
+              <li>Avoids surgery and anesthesia risk now</li>
+              <li>Diet changes may reduce flare-ups</li>
+              <li>Symptoms can recur or worsen over time</li>
+              <li>Risk of a future urgent/emergency episode</li>
+              <li>Requires ongoing symptom monitoring</li>
+            </ul>
+          </div>
+        </div>
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" onClick={onContinue}>Continue</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DecisionPoint({ onChoose }) {
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>What would you like to do next?</h2>
+        <p className="muted">There's no wrong answer &mdash; choose what feels right, and your care team will support you either way.</p>
+        <div className="decision-options">
+          <div className="decision-btn" onClick={() => onChoose("interested")}>
+            I'm interested in surgery
+            <span className="sub">Move forward with pre-surgical prep and scheduling.</span>
+          </div>
+          <div className="decision-btn" onClick={() => onChoose("undecided")}>
+            I want to talk to a surgeon first
+            <span className="sub">Book a consultation to ask questions before deciding.</span>
+          </div>
+          <div className="decision-btn" onClick={() => onChoose("notInterested")}>
+            I'm not interested in surgery right now
+            <span className="sub">Get guidance on managing symptoms without surgery.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Prep({ onContinue }) {
+  const items = [
+    "Stop eating and drinking after midnight the night before surgery.",
+    "Ask your care team which regular medications to pause (especially blood thinners).",
+    "Arrange a ride home &mdash; you cannot drive yourself after anesthesia.",
+    "Shower with the antiseptic soap provided, if given, the night before.",
+    "Wear loose, comfortable clothing on the day of surgery.",
+    "Plan for light activity and rest for the first few days after."
+  ];
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Getting ready for surgery</h2>
+        <p className="muted">A quick checklist before your procedure.</p>
+        {items.map((it, i) => (
+          <div className="checklist-item" key={i}>
+            <span>&#9744;</span><span dangerouslySetInnerHTML={{__html: it}}></span>
+          </div>
+        ))}
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" onClick={onContinue}>Continue to scheduling</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Scheduling({ data, setData, onSubmit }) {
+  const update = (k, v) => setData({ ...data, [k]: v });
+  const valid = data.phone && data.email && data.preferredDate1;
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Schedule your procedure</h2>
+        <label>Phone number</label>
+        <input type="tel" value={data.phone || ""} onChange={e => update("phone", e.target.value)} />
+        <label>Email</label>
+        <input type="email" value={data.email || ""} onChange={e => update("email", e.target.value)} />
+        <label>Insurance ID (optional)</label>
+        <input type="text" value={data.insuranceId || ""} onChange={e => update("insuranceId", e.target.value)} />
+        <label>Preferred date &#40;1st choice&#41;</label>
+        <input type="date" value={data.preferredDate1 || ""} onChange={e => update("preferredDate1", e.target.value)} />
+        <label>Preferred date &#40;2nd choice, optional&#41;</label>
+        <input type="date" value={data.preferredDate2 || ""} onChange={e => update("preferredDate2", e.target.value)} />
+        <label>Anything else we should know?</label>
+        <textarea value={data.notes || ""} onChange={e => update("notes", e.target.value)}></textarea>
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" disabled={!valid} onClick={onSubmit}>Submit scheduling request</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotInterested({ data, setData, onSubmit }) {
+  const update = (k, v) => setData({ ...data, [k]: v });
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Managing without surgery, for now</h2>
+        <p>That's a reasonable choice. Here's how to manage symptoms and stay safe:</p>
+        <h3>Diet</h3>
+        <p>Stick to a low-fat diet and notice which foods trigger pain. Smaller, more frequent meals can help.</p>
+        <h3>Watch for these &mdash; seek emergency care if they occur</h3>
+        <p>Fever, yellowing skin/eyes, severe pain that won't go away, or a rapid heartbeat.</p>
+        <label>What's making you hesitant about surgery? (optional, helps your care team follow up)</label>
+        <textarea value={data.hesitation || ""} onChange={e => update("hesitation", e.target.value)}></textarea>
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" onClick={onSubmit}>Save and finish</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Consult({ data, setData, onSubmit }) {
+  const update = (k, v) => setData({ ...data, [k]: v });
+  const valid = data.phone && data.email;
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Book a surgeon consultation</h2>
+        <p className="muted">No commitment &mdash; this is just a conversation to help you decide.</p>
+        <label>Phone number</label>
+        <input type="tel" value={data.phone || ""} onChange={e => update("phone", e.target.value)} />
+        <label>Email</label>
+        <input type="email" value={data.email || ""} onChange={e => update("email", e.target.value)} />
+        <label>Best times to reach you</label>
+        <input type="text" value={data.preferredContactTimes || ""} onChange={e => update("preferredContactTimes", e.target.value)} placeholder="e.g. weekday mornings" />
+        <label>Questions or concerns you'd like to discuss</label>
+        <textarea value={data.questions || ""} onChange={e => update("questions", e.target.value)}></textarea>
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" disabled={!valid} onClick={onSubmit}>Request consultation</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Complete({ branch }) {
+  const copy = {
+    interested: { title: "Scheduling request received", body: "Our scheduling team will confirm your date and send pre-op instructions shortly." },
+    notInterested: { title: "You're all set", body: "Your care team has this on file. You can return to this pathway anytime if things change." },
+    undecided: { title: "Consultation requested", body: "A scheduler will reach out to set up time with a surgeon to answer your questions." }
+  }[branch] || { title: "Done", body: "Thanks for completing your pathway." };
+  return (
+    <div className="container">
+      <div className="card" style={{textAlign: "center"}}>
+        <h2>{copy.title}</h2>
+        <p>{copy.body}</p>
+      </div>
+    </div>
+  );
+}
+
+function ClinicianPanel({ records, onBack }) {
+  const [expanded, setExpanded] = useState(null);
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Clinician view</h2>
+        <p className="muted">Completed patient pathways from this device/browser.</p>
+        {records.length === 0 && <div className="empty-state">No completed pathways yet.</div>}
+        {records.length > 0 && (
+          <table className="table">
+            <thead>
+              <tr><th>Patient</th><th>Submitted</th><th>Urgency</th><th>Outcome</th></tr>
+            </thead>
+            <tbody>
+              {records.map((r, i) => (
+                <React.Fragment key={i}>
+                  <tr className="record-row" onClick={() => setExpanded(expanded === i ? null : i)}>
+                    <td>{r.assessment.patientName}</td>
+                    <td>{new Date(r.timestamp).toLocaleString()}</td>
+                    <td><Badge urgency={r.triage.urgency} /></td>
+                    <td><span className="badge badge-outline">{r.branch}</span></td>
+                  </tr>
+                  {expanded === i && (
+                    <tr><td colSpan="4">
+                      <div className="detail-panel">
+                        <div className="detail-grid">
+                          <div className="kv"><div className="k">DOB</div><div className="v">{r.assessment.dob}</div></div>
+                          <div className="kv"><div className="k">Pain location</div><div className="v">{r.assessment.painLocation}</div></div>
+                          <div className="kv"><div className="k">Pain severity</div><div className="v">{r.assessment.painSeverity}/10</div></div>
+                          <div className="kv"><div className="k">Duration</div><div className="v">{r.assessment.durationDays} days</div></div>
+                          <div className="kv"><div className="k">Fatty food trigger</div><div className="v">{r.assessment.painAfterFattyFood}</div></div>
+                          <div className="kv"><div className="k">Recurring</div><div className="v">{r.assessment.recurringEpisodes}</div></div>
+                          <div className="kv"><div className="k">Fever</div><div className="v">{r.assessment.fever}</div></div>
+                          <div className="kv"><div className="k">Jaundice</div><div className="v">{r.assessment.jaundice}</div></div>
+                        </div>
+                        <p><strong>AI reasoning:</strong> {r.triage.reasoning}</p>
+                        <p><strong>Next step:</strong> {r.triage.recommendedNextSteps}</p>
+                        {r.branchData && <p><strong>Branch details:</strong> {JSON.stringify(r.branchData)}</p>}
+                      </div>
+                    </td></tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div className="nav-row"><button className="btn" onClick={onBack}>Back to patient view</button><span></span></div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsModal({ apiKey, setApiKey, onClose }) {
+  const [val, setVal] = useState(apiKey);
+  return (
+    <div className="settings-modal-backdrop" onClick={onClose}>
+      <div className="settings-modal" onClick={e => e.stopPropagation()}>
+        <h3 style={{marginTop: 0}}>AI triage settings</h3>
+        <p className="muted" style={{fontSize: "13px"}}>Optionally enter an Anthropic API key to use live AI triage (Claude) for this session. Kept only in memory &mdash; not saved or sent anywhere else. Leave blank to use built-in rule-based triage.</p>
+        <label>Anthropic API key</label>
+        <input type="text" value={val} onChange={e => setVal(e.target.value)} placeholder="sk-ant-..." />
+        <div className="nav-row">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={() => { setApiKey(val); onClose(); }}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [step, setStep] = useState("intro");
+  const [branch, setBranch] = useState(null);
+  const [assessment, setAssessment] = useState({
+    patientName: "", dob: "", painLocation: "", painSeverity: "3", durationDays: "",
+    painAfterFattyFood: "", recurringEpisodes: "", nauseaVomiting: "",
+    fever: "", jaundice: "", priorGallstoneDiagnosis: ""
+  });
+  const [triageResult, setTriageResult] = useState(null);
+  const [branchData, setBranchData] = useState({});
+  const [records, setRecords] = useState([]);
+  const [view, setView] = useState("patient");
+  const [apiKey, setApiKey] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => { setRecords(loadRecords()); }, []);
+
+  function finalizeRecord() {
+    const rec = {
+      timestamp: Date.now(),
+      assessment,
+      triage: triageResult,
+      branch,
+      branchData
+    };
+    const next = [rec, ...records];
+    setRecords(next);
+    saveRecords(next);
+  }
+
+  function resetAll() {
+    setStep("intro");
+    setBranch(null);
+    setAssessment({ patientName: "", dob: "", painLocation: "", painSeverity: "3", durationDays: "", painAfterFattyFood: "", recurringEpisodes: "", nauseaVomiting: "", fever: "", jaundice: "", priorGallstoneDiagnosis: "" });
+    setTriageResult(null);
+    setBranchData({});
+  }
+
+  return (
+    <React.Fragment>
+      <div className="topbar">
+        <h1>Gallbladder Care Pathway</h1>
+        <div className="actions">
+          {view === "patient" && <button className="btn btn-outline" onClick={() => setShowSettings(true)}>AI settings</button>}
+          <button className="btn" onClick={() => setView(view === "patient" ? "clinician" : "patient")}>
+            {view === "patient" ? "Clinician view" : "Patient view"}
+          </button>
+        </div>
+      </div>
+      {showSettings && <SettingsModal apiKey={apiKey} setApiKey={setApiKey} onClose={() => setShowSettings(false)} />}
+
+      {view === "clinician" ? (
+        <ClinicianPanel records={records} onBack={() => setView("patient")} />
+      ) : (
+        <React.Fragment>
+          <ProgressBar step={step} />
+          {step === "intro" && <Intro onStart={() => setStep("assessment")} />}
+          {step === "assessment" && (
+            <Assessment data={assessment} setData={setAssessment} onComplete={() => setStep("triage")} />
+          )}
+          {step === "triage" && (
+            <Triage data={assessment} apiKey={apiKey} result={triageResult} setResult={setTriageResult} onContinue={() => setStep("education")} />
+          )}
+          {step === "education" && <Education onContinue={() => setStep("decisionAid")} />}
+          {step === "decisionAid" && <DecisionAid onContinue={() => setStep("decisionPoint")} />}
+          {step === "decisionPoint" && (
+            <DecisionPoint onChoose={(b) => {
+              setBranch(b);
+              if (b === "interested") setStep("prep");
+              if (b === "notInterested") setStep("notInterested");
+              if (b === "undecided") setStep("consult");
+            }} />
+          )}
+          {step === "prep" && <Prep onContinue={() => setStep("scheduling")} />}
+          {step === "scheduling" && (
+            <Scheduling data={branchData} setData={setBranchData} onSubmit={() => { finalizeRecord(); setStep("complete"); }} />
+          )}
+          {step === "notInterested" && (
+            <NotInterested data={branchData} setData={setBranchData} onSubmit={() => { finalizeRecord(); setStep("complete"); }} />
+          )}
+          {step === "consult" && (
+            <Consult data={branchData} setData={setBranchData} onSubmit={() => { finalizeRecord(); setStep("complete"); }} />
+          )}
+          {step === "complete" && (
+            <div className="container">
+              <Complete branch={branch} />
+              <div style={{textAlign: "center"}}>
+                <button className="btn" onClick={resetAll}>Start a new pathway</button>
+              </div>
+            </div>
+          )}
+        </React.Fragment>
+      )}
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
