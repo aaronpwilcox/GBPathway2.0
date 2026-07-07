@@ -84,7 +84,7 @@
   .badge-outline { background: #eef2f7; color: #475569; }
   .nav-row { display: flex; justify-content: space-between; margin-top: 24px; gap: 10px; }
   .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
-  @media (max-width: 560px) { .compare-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .compare-grid { grid-template-columns: 1fr; } .resource-grid { grid-template-columns: 1fr; } }
   .compare-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
   .compare-card h4 { margin: 0 0 10px; font-size: 14px; }
   .compare-card ul { margin: 0; padding-left: 18px; font-size: 13px; color: #334155; line-height: 1.6; }
@@ -117,15 +117,40 @@
     border-radius: 50%; animation: spin 0.8s linear infinite; margin: 30px auto;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .resource-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .resource-card {
+    display: flex; flex-direction: column; gap: 8px; text-align: left;
+    border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+    background: white; text-decoration: none; color: inherit;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .resource-card:hover { border-color: var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  .resource-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 8px; background: #eff6ff;
+    color: var(--primary); font-size: 11px; font-weight: 800; letter-spacing: 0.02em;
+  }
+  .resource-title { font-size: 15px; font-weight: 700; }
+  .resource-desc { font-size: 13px; color: var(--muted); flex: 1; }
+  .resource-open { font-size: 13px; font-weight: 600; color: var(--primary); }
 </style>
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel" data-presets="react">
+<script>
+  // Force the "classic" JSX runtime so Babel compiles to React.createElement()
+  // calls against the global React/ReactDOM loaded above, instead of the newer
+  // "automatic" runtime, which injects an ES `import` statement that breaks
+  // when this script isn't loaded as type="module".
+  Babel.registerPreset("react-classic", {
+    presets: [[Babel.availablePresets["react"], { runtime: "classic" }]]
+  });
+</script>
+<script type="text/babel" data-presets="react-classic">
 
 const { useState, useEffect } = React;
 
-const STEPS = ["intro","assessment","triage","education","decisionAid","decisionPoint","prep","scheduling","notInterested","consult","complete"];
+const STEPS = ["intro","assessment","triage","education","decisionAid","decisionPoint","resources","prep","scheduling","notInterested","consult","complete"];
 
 function loadRecords() {
   try { return JSON.parse(localStorage.getItem("gb_pathway_records") || "[]"); }
@@ -183,7 +208,7 @@ async function callTriageAI(apiKey, d) {
 }
 
 function ProgressBar({ step }) {
-  const order = ["intro","assessment","triage","education","decisionAid","decisionPoint","prep","scheduling","notInterested","consult","complete"];
+  const order = ["intro","assessment","triage","education","decisionAid","decisionPoint","resources","prep","scheduling","notInterested","consult","complete"];
   const idx = order.indexOf(step);
   const pct = Math.round((idx / (order.length - 1)) * 100);
   if (step === "intro") return null;
@@ -353,30 +378,56 @@ function Triage({ data, apiKey, result, setResult, onContinue }) {
 
 function AnatomySVGBefore() {
   return (
-    <svg viewBox="0 0 300 220" width="100%" height="200">
-      <rect x="0" y="0" width="300" height="220" fill="#fdf2f2" rx="12" />
-      <ellipse cx="150" cy="120" rx="70" ry="55" fill="#e8b4a8" opacity="0.5" />
-      <path d="M120 80 C110 100, 110 140, 130 160 C145 172, 165 172, 180 158 C195 144, 195 105, 178 85 C165 70, 135 70, 120 80 Z" fill="#8b5a3c" />
-      <circle cx="145" cy="120" r="6" fill="#fff8e7" stroke="#b45309" strokeWidth="1.5" />
-      <circle cx="160" cy="135" r="8" fill="#fff8e7" stroke="#b45309" strokeWidth="1.5" />
-      <circle cx="155" cy="105" r="5" fill="#fff8e7" stroke="#b45309" strokeWidth="1.5" />
-      <path d="M120 80 C110 100, 110 140, 130 160 C145 172, 165 172, 180 158 C195 144, 195 105, 178 85" fill="none" stroke="#dc2626" strokeWidth="2" strokeDasharray="3 3" />
-      <text x="150" y="205" textAnchor="middle" fontSize="12" fill="#7f1d1d" fontWeight="600">Gallbladder with gallstones (inflamed)</text>
+    <svg viewBox="0 0 300 240" width="100%" height="220">
+      <rect x="0" y="0" width="300" height="240" fill="#fdf1f0" rx="14" />
+      <path d="M75 55 q8 -12 16 -2" stroke="#f87171" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M209 53 q8 -12 16 2" stroke="#f87171" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M62 90 q-12 4 -6 16" stroke="#f87171" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M238 90 q12 4 6 16" stroke="#f87171" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <rect x="138" y="46" width="24" height="30" rx="9" fill="#a3c95a" stroke="#3f5a1e" strokeWidth="4" />
+      <ellipse cx="150" cy="140" rx="62" ry="72" fill="#b3d873" stroke="#3f5a1e" strokeWidth="4" />
+      <circle cx="112" cy="132" r="9" fill="#e8927a" opacity="0.45" />
+      <circle cx="188" cy="132" r="9" fill="#e8927a" opacity="0.45" />
+      <circle cx="128" cy="112" r="7" fill="#2d3b12" />
+      <circle cx="172" cy="112" r="7" fill="#2d3b12" />
+      <circle cx="130" cy="110" r="2" fill="#fff" />
+      <circle cx="174" cy="110" r="2" fill="#fff" />
+      <path d="M116 92 q12 -10 24 -2" stroke="#2d3b12" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M160 90 q12 -8 24 2" stroke="#2d3b12" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M132 132 q18 10 36 0" stroke="#2d3b12" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <circle cx="128" cy="172" r="11" fill="#ede4c8" stroke="#8a7440" strokeWidth="2.5" />
+      <circle cx="156" cy="182" r="9" fill="#ede4c8" stroke="#8a7440" strokeWidth="2.5" />
+      <circle cx="174" cy="164" r="7" fill="#ede4c8" stroke="#8a7440" strokeWidth="2.5" />
+      <circle cx="146" cy="160" r="6" fill="#ede4c8" stroke="#8a7440" strokeWidth="2.5" />
+      <text x="150" y="230" textAnchor="middle" fontSize="13" fill="#7f1d1d" fontWeight="700">Gallbladder with gallstones (inflamed)</text>
     </svg>
   );
 }
 function AnatomySVGAfter() {
   return (
-    <svg viewBox="0 0 300 220" width="100%" height="200">
-      <rect x="0" y="0" width="300" height="220" fill="#f0fdf4" rx="12" />
-      <ellipse cx="150" cy="120" rx="70" ry="55" fill="#bbf7d0" opacity="0.5" />
-      <path d="M130 95 Q150 88 170 95" fill="none" stroke="#15803d" strokeWidth="2.5" strokeDasharray="4 3" />
-      <circle cx="140" cy="95" r="2.5" fill="#166534" />
-      <circle cx="160" cy="95" r="2.5" fill="#166534" />
-      <circle cx="150" cy="90" r="2.5" fill="#166534" />
-      <text x="150" y="140" textAnchor="middle" fontSize="12" fill="#166534">Gallbladder removed</text>
-      <text x="150" y="158" textAnchor="middle" fontSize="11" fill="#166534">(small incision sites shown)</text>
-      <text x="150" y="205" textAnchor="middle" fontSize="12" fill="#166534" fontWeight="600">After laparoscopic cholecystectomy</text>
+    <svg viewBox="0 0 300 240" width="100%" height="220">
+      <rect x="0" y="0" width="300" height="240" fill="#f0fdf4" rx="14" />
+      <circle cx="55" cy="38" r="4" fill="#94a3b8" />
+      <circle cx="75" cy="33" r="4" fill="#94a3b8" />
+      <circle cx="95" cy="36" r="4" fill="#94a3b8" />
+      <text x="75" y="53" textAnchor="middle" fontSize="9" fill="#64748b">incision sites</text>
+      <path d="M95 70
+               C 70 75, 55 100, 60 125
+               C 63 150, 85 165, 115 168
+               C 145 171, 210 168, 225 140
+               C 238 115, 225 85, 195 72
+               C 165 60, 125 62, 95 70 Z"
+            fill="#b5654a" stroke="#7a3524" strokeWidth="4" />
+      <path d="M118 108 q6 8 12 0" stroke="#4a2015" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M168 108 q6 8 12 0" stroke="#4a2015" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <path d="M130 128 q20 16 40 0" stroke="#4a2015" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <circle cx="112" cy="122" r="9" fill="#e8927a" opacity="0.6" />
+      <circle cx="196" cy="122" r="9" fill="#e8927a" opacity="0.6" />
+      <path d="M150 168 C 150 185, 150 190, 150 200" stroke="#d9a441" strokeWidth="6" fill="none" strokeLinecap="round" />
+      <path d="M110 205 q20 -18 40 0 q20 18 40 0 q20 -18 40 0" stroke="#e8b4a0" strokeWidth="14" fill="none" strokeLinecap="round" />
+      <ellipse cx="205" cy="150" rx="20" ry="24" fill="none" stroke="#94a3b8" strokeWidth="3" strokeDasharray="5 5" />
+      <path d="M196 150 l6 7 l12 -14" stroke="#16a34a" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="150" y="230" textAnchor="middle" fontSize="12" fill="#166534" fontWeight="700">Gallbladder removed &mdash; bile flows directly</text>
     </svg>
   );
 }
@@ -464,6 +515,37 @@ function DecisionPoint({ onChoose }) {
   );
 }
 
+function ResourceHub({ onContinue }) {
+  const resources = [
+    { title: "The Day of Your Surgery", desc: "What to expect from arrival to going home.", file: "docs/day-of-surgery.pdf" },
+    { title: "How to Prepare", desc: "Steps to take in the days and weeks before surgery.", file: "docs/how-to-prepare.pdf" },
+    { title: "Understanding Your Operation", desc: "What actually happens during your procedure.", file: "docs/the-operation.pdf" },
+    { title: "Recovering After Surgery", desc: "Pain control, wound care, bathing, and activity.", file: "docs/post-op-recovery.pdf" }
+  ];
+  return (
+    <div className="container">
+      <div className="card">
+        <h2>Your care guides</h2>
+        <p className="muted">Four short guides to walk you through surgery, in order. Each opens as a PDF you can read, save, or print.</p>
+        <div className="resource-grid">
+          {resources.map((r, i) => (
+            <a key={i} className="resource-card" href={r.file} target="_blank" rel="noopener noreferrer">
+              <span className="resource-badge">PDF</span>
+              <span className="resource-title">{r.title}</span>
+              <span className="resource-desc">{r.desc}</span>
+              <span className="resource-open">Open guide &rarr;</span>
+            </a>
+          ))}
+        </div>
+        <div className="nav-row">
+          <span></span>
+          <button className="btn btn-primary" onClick={onContinue}>Continue to pre-surgical prep</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Prep({ onContinue }) {
   const items = [
     "Stop eating and drinking after midnight the night before surgery.",
@@ -477,7 +559,7 @@ function Prep({ onContinue }) {
     <div className="container">
       <div className="card">
         <h2>Getting ready for surgery</h2>
-        <p className="muted">A quick checklist before your procedure.</p>
+        <p className="muted">A quick checklist before your procedure. See the &ldquo;How to Prepare&rdquo; guide for full detail.</p>
         {items.map((it, i) => (
           <div className="checklist-item" key={i}>
             <span>&#9744;</span><span dangerouslySetInnerHTML={{__html: it}}></span>
@@ -721,11 +803,12 @@ function App() {
           {step === "decisionPoint" && (
             <DecisionPoint onChoose={(b) => {
               setBranch(b);
-              if (b === "interested") setStep("prep");
+              if (b === "interested") setStep("resources");
               if (b === "notInterested") setStep("notInterested");
               if (b === "undecided") setStep("consult");
             }} />
           )}
+          {step === "resources" && <ResourceHub onContinue={() => setStep("prep")} />}
           {step === "prep" && <Prep onContinue={() => setStep("scheduling")} />}
           {step === "scheduling" && (
             <Scheduling data={branchData} setData={setBranchData} onSubmit={() => { finalizeRecord(); setStep("complete"); }} />
